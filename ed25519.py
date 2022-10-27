@@ -54,6 +54,9 @@ class Point:
                 new_point = new_point + self  #P + G
         return new_point
     
+    def from_hash(num: int):
+        return Point(Gx, Gy) * num
+
     def isSafe(self) -> bool:
         if (self.x == 0 and self.y == 1) or ((self * order).x != 0):
             return False

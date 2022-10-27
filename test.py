@@ -1,16 +1,25 @@
 import inspect
+from functions import *
+from ed25519 import *
 
-def test(*args):
-    d = {}
-    for arg in args:
-        d[retrieve_name(arg)[0]] = arg
-    print(d)
+x1 = 1
+x2 = 2
+secret = randNumber()
+randCo = 530970117679225700845355356338959302532639881640020859155839157088983915029
 
-def retrieve_name(var):
-    callers_local_vars = inspect.currentframe().f_back.f_back.f_locals.items()
-    return [var_name for var_name, var_val in callers_local_vars if var_val is var]
+def share(secret):
+    l1 = (x2//(x2-x1))
+    l2 = (x1//(x1-x2))
 
-hello = 1
-byte = 2
+    return ((x1, (secret + randCo*x1) * l1 % order), (x2, (secret + randCo*x2) * l2 % order))
 
-test(hello, byte)
+def interpolate(shares:tuple):
+    l1 = (x2//(x2-x1))
+    l2 = (x1//(x1-x2))
+
+    return (shares[0][1] + shares[1][1]) % order
+
+print(secret)
+shares = share(secret)
+print(shares)
+print(interpolate(shares))

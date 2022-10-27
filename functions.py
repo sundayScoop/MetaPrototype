@@ -26,10 +26,13 @@ print(verif)
 
 True
 '''
-def hmac_sign(*args: str, key: int) -> bytes:
+def hmac_sign(*args, key: int) -> bytes:
     data: bytes = args[0].encode()
     for arg in args[1:]:
-        data += arg.encode()
+        if(type(arg) == 'str'):
+            data += arg.encode()
+        elif(type(arg) == 'bytes'):
+            data += arg
 
     hmac_obj = hmac.new(key=key.to_bytes(32, 'little'), msg=data, digestmod=hashlib.sha256)
     return hmac_obj.digest()
@@ -37,7 +40,10 @@ def hmac_sign(*args: str, key: int) -> bytes:
 def hmac_verify(*args: str, hashed: bytes, key: int) -> bool:
     data: bytes = args[0].encode()
     for arg in args[1:]:
-        data += arg.encode()
+        if(type(arg) == 'str'):
+            data += arg.encode()
+        elif(type(arg) == 'bytes'):
+            data += arg
 
     hmac_obj = hmac.new(key=key.to_bytes(32, 'little'), msg=data, digestmod=hashlib.sha256)
     return hmac_obj.digest() == hashed
@@ -52,11 +58,15 @@ def hash_str(*args: str) -> int:
     data = ''
     for arg in args:
         data += arg
-    return int.from_bytes(hashlib.sha512(data).digest(), 'little') % ed25519.order
+    return int.from_bytes(hashlib.sha512(data.encode()).digest(), 'little') % ed25519.order
 
 ############################## AES ################################################
 '''
 USAGE
+
+Key must be int
+Arguments can be anything!
+___________________________
 
 key = 100
 cmk = 10839034783
@@ -95,7 +105,9 @@ def aes_Encrypt(*args, key: int) -> tuple:
         d[retrieve_name(arg)[0]] = arg  # <- Awesome!
 
     key = base64.b64encode(key.to_bytes(32, 'little'))
-    
+
+    d['certTime'] = to_base64(d['certTime'])
+    print(d)
     data = json.dumps(d)
     f = Fernet(key)
     ciphertext = f.encrypt(data.encode())
@@ -105,7 +117,9 @@ def aes_Decrypt(ciphertext, key: int) -> dict:
     key = base64.b64encode(key.to_bytes(32, 'little'))
     f = Fernet(key)
     decrypted = f.decrypt(ciphertext)
-    return json.loads(decrypted.decode())
+    d = json.loads(decrypted.decode())
+    d['certTime'] = from_base64(d['certTime'])
+    return d
 
 ############################## Math ################################################
 def modInv(num: int) -> int:
@@ -126,6 +140,12 @@ def last_32_bytes(data :bytes) -> int:
 
 #############################################################################################
 
+
+def to_base64(data: bytes):
+    return base64.b64encode(data).decode()
+
+def from_base64(data: str):
+    return base64.b64decode(data)
 
 def timestamp() -> str:
     return str(time.time())
