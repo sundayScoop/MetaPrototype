@@ -21,14 +21,15 @@ userID = hash_str(username)
 gUser = Point.from_hash(hash_str(str(userID), str(hash_point_to_int(gVVK))))
 
 
-
 #### Not so secret, but secret for some ppl #####
 VUID = last_32_bytes(hash_point_to_bytes(gUser * CMK))
 gCVK = G * CVK
 gCVKR = G * CVK2
+print("DICK "  + gCVKR.to_b64())
 
 CMKmul = first_32_bytes(hash_point_to_bytes(gUser * CMK))
-gCMKAuth = G * (CMK * CMKmul)
+
+gCMKAuth = (G * CMK) * CMKmul
 
 gCMK = G * CMK
 gR = G * CMK2

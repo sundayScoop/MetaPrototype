@@ -2,7 +2,7 @@ from operator import mod
 from os import access
 from functions import *
 from ed25519 import *
-from ork_home import dns
+from ork_home import dns, dnsCVK
 from ork_cmk_1 import Convert as convert1
 from ork_cmk_2 import Convert as convert2
 from ork_cmk_1 import ConvertCMK as convertcmk1
@@ -28,6 +28,7 @@ gPass = Point.from_hash(hash_str(password))
 
 ############################ PRISM ##########################################
 challenge = GetChallenge()
+print("HERE" + challenge['challenge'])
 
 startTimer = float(timestamp())
 
@@ -62,11 +63,11 @@ assert(ok[0] == 'OK' and ok[1] == 'OK')
 r2 = randNumber()
 gUser = Point.from_hash(hash_str(str(userID), str(hash_point_to_int(challenge['gVVK'])))) # TODO: Change to hmac here
 
-response1 = convertcmk1(userID, gPass * r2)
-response2 = convertcmk2(userID, gPass * r2)
+response1 = convertcmk1(userID, gUser * r2)
+response2 = convertcmk2(userID, gUser * r2)
 
 dd = ( aes_Decrypt(response1, key=PRISMAuthi[0]), aes_Decrypt(response2, key=PRISMAuthi[1]) )
-gUserCMK = ( Point.from_b64(dd[0]['gPassR2CMK']) +  Point.from_b64(dd[1]['gPassR2CMK']) ) * modInv(r2)
+gUserCMK = ( Point.from_b64(dd[0]['gUserR2CMK']) +  Point.from_b64(dd[1]['gUserR2CMK']) ) * modInv(r2)
 CMKmul = first_32_bytes(hash_point_to_bytes(gUserCMK))
 
 gCMKAuth = gCMK * CMKmul
@@ -90,6 +91,9 @@ r3r4 = r3 * r4
 time = d[0]['time']
 certTime = d[0]['certTime']
 
+### DNS Call for CVK Ork publics
+gvOrki = dnsCVK(userID)
+
 sig1 = authenticatecmk1(userID, aes_Encrypt(userID, time, certTime, H_CMKmul_r4, r3r4, key=PRISMAuthi[0]))
 
 time = d[1]['time']
@@ -102,13 +106,14 @@ sigs = ( aes_Decrypt(sig1, key=PRISMAuthi[0]), aes_Decrypt(sig2, key=PRISMAuthi[
 S =  ( ( sigs[0]['S'] + sigs[1]['S'] ) * modInv(r4) ) % order
 VUID = last_32_bytes(hash_point_to_bytes(gUserCMK)) 
 
-cvkResponse = ( signin1(VUID, gRmul, S, timestamp2, gSessKeyPub, challenge), signin2(VUID, gRmul, S, timestamp2, gSessKeyPub, challenge) )
+cvkResponse = ( signin1(VUID, gRmul, S, timestamp2, gSessKeyPub, challenge['challenge']), signin2(VUID, gRmul, S, timestamp2, gSessKeyPub, challenge['challenge']) )
 
-ECDH = ( hash_point_to_int(mgOrki[0] * SessKey), hash_point_to_int(mgOrki[1] * SessKey) )
+ECDH = ( hash_point_to_int(gvOrki[0] * SessKey), hash_point_to_int(gvOrki[1] * SessKey) )
 
 f = ( aes_Decrypt(cvkResponse[0], key=ECDH[0]), aes_Decrypt(cvkResponse[1], key=ECDH[1]) )
 
 gCVKR = Point.from_b64(f[0]['CVKR']) + Point.from_b64(f[1]['CVKR'])
+
 CVKS = ( f[0]['CVKS'] + f[1]['CVKS'] ) % order
 
 vendor_response = SignIn(VUID, gCVKR, CVKS, timestamp2, gSessKeyPub)

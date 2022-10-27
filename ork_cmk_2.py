@@ -45,13 +45,13 @@ def ConvertCMK(userID, gPassR2: Point):
     gCMK = getGCMK().to_b64()
     return aes_Encrypt(gPassR2CMK, gR, gCMK, key=PRISMAuthi)
 
-def ConvertCMK(userID, gPassR2: Point):
+def ConvertCMK(userID, gUserR2: Point):
     # Retrieve CMK record
-    assert(gPassR2.isSafe())
-    gPassR2CMK = (gPassR2 * CMKi).to_b64()
+    assert(gUserR2.isSafe())
+    gUserR2CMK = (gUserR2 * CMKi).to_b64()
     gR = getGR().to_b64()
     gCMK = getGCMK().to_b64()
-    return aes_Encrypt(gPassR2CMK, gR, gCMK, key=PRISMAuthi)
+    return aes_Encrypt(gUserR2CMK, gR, gCMK, key=PRISMAuthi)
 
 def AuthenticateCMK(userID, data):
     # Retirve CMk record

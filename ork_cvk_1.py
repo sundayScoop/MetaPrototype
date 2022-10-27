@@ -22,11 +22,11 @@ def SigninCVK(VUID, gRMul: Point, S, timestamp2, gSessKeyPub: Point, challenge):
     # Retirve CVk record
     assert(float(timestamp()) - timestamp2 < 10.0)
     H = (hash_str(gRMul.to_b64(), gCMKAuth.to_b64(), str(timestamp2), gSessKeyPub.to_b64())) * hash_str("CMK Authentication") ##### ERROR IS HERE
-    assert(G * 8 * S == gRMul * 8 + gCMKAuth * H * 8)
+    assert((G * 8 * S).x == (gRMul * 8 + gCMKAuth * H * 8).x)
     CVKR = (G * CVK2i).to_b64()
     CVKH = hash_str(gCVKR.to_b64(), gCVK.to_b64(), str(timestamp2), gSessKeyPub.to_b64(), str(VUID), str(challenge) )
+
     CVKS = ( CVK2i + CVKH * CVKi ) % order
     ECDH = hash_point_to_int(gSessKeyPub * mSecOrki)
 
     return aes_Encrypt(CVKR, CVKS, key=ECDH)
-

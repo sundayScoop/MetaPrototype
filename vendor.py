@@ -14,5 +14,6 @@ def SignIn(VUID, gCVKR: Point, CVKS, timestamp2, gSessKeyPub: Point):
     # Retirve gCVK from record
     H = hash_str(gCVKR.to_b64(), gCVK.to_b64(), str(timestamp2), gSessKeyPub.to_b64(), str(VUID), str(challenge))
     ECDH = hash_point_to_int(gSessKeyPub * VVK)
-    assert(G * 8 * CVKS == gCVKR * 8 + gCVK * H)
-    return aes_Encrypt(access_token, key=ECDH)
+    assert((G * 8 * CVKS).x == (gCVKR * 8 + gCVK * H * 8).x)
+    token = "Logged in"
+    return aes_Encrypt(token, key=ECDH)
