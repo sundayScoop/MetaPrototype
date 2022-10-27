@@ -30,3 +30,37 @@ def Authenticate(userID, time, certTime, VERIFY):
         return 'OK'
     else:
         return 'NOT OK'
+
+def getGR():
+    return gR
+
+def getGCMK():
+    return gCMK
+
+def ConvertCMK(userID, gPassR2: Point):
+    # Retrieve CMK record
+    assert(gPassR2.isSafe())
+    gPassR2CMK = (gPassR2 * CMKi).to_b64()
+    gR = getGR().to_b64()
+    gCMK = getGCMK().to_b64()
+    return aes_Encrypt(gPassR2CMK, gR, gCMK, key=PRISMAuthi)
+
+def ConvertCMK(userID, gPassR2: Point):
+    # Retrieve CMK record
+    assert(gPassR2.isSafe())
+    gPassR2CMK = (gPassR2 * CMKi).to_b64()
+    gR = getGR().to_b64()
+    gCMK = getGCMK().to_b64()
+    return aes_Encrypt(gPassR2CMK, gR, gCMK, key=PRISMAuthi)
+
+def AuthenticateCMK(userID, data):
+    # Retirve CMk record
+    d = aes_Decrypt(data, key=PRISMAuthi)
+    purpose = 'auth'
+
+    assert(hmac_verify(str(d['time']), str(userID), purpose, hashed=d['certTime'], key=mSecOrki))
+    
+    blindH = d['H_CMKmul_r4'] * hash_str("CMK Authentication")
+    S = ( CMK2i * d['r3r4'] + blindH * CMKi ) % order
+
+    return aes_Encrypt(S, key=PRISMAuthi)

@@ -106,8 +106,8 @@ def aes_Encrypt(*args, key: int) -> tuple:
 
     key = base64.b64encode(key.to_bytes(32, 'little'))
 
-    d['certTime'] = to_base64(d['certTime'])
-    print(d)
+    if ('certTime' in d):
+        d['certTime'] = to_base64(d['certTime'])
     data = json.dumps(d)
     f = Fernet(key)
     ciphertext = f.encrypt(data.encode())
@@ -118,7 +118,8 @@ def aes_Decrypt(ciphertext, key: int) -> dict:
     f = Fernet(key)
     decrypted = f.decrypt(ciphertext)
     d = json.loads(decrypted.decode())
-    d['certTime'] = from_base64(d['certTime'])
+    if ('certTime' in d):
+        d['certTime'] = from_base64(d['certTime'])
     return d
 
 ############################## Math ################################################

@@ -1,6 +1,9 @@
 
 
 
+import base64
+
+
 order = 7237005577332262213973186563042994240857116359379907606001950938285454250989
 Gx = 15112221349535400772501151409588531511454012693041857206046113283949847762202
 Gy = 46316835694926478169428394003475163141307993866256225615783033603165251855960
@@ -53,6 +56,15 @@ class Point:
             if x_a == '1':
                 new_point = new_point + self  #P + G
         return new_point
+    
+    def to_b64(self):
+        return base64.b64encode(self.x.to_bytes(32, 'little') + self.y.to_bytes(32, 'little')).decode()
+    
+    def from_b64(data):
+        data = base64.b64decode(data)
+        x = int.from_bytes(data[:32], 'little')
+        y = int.from_bytes(data[32:], 'little')
+        return Point(x, y)
     
     def from_hash(num: int):
         return Point(Gx, Gy) * num
